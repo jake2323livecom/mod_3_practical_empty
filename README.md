@@ -8,69 +8,71 @@
 
 ## Build device configuration files with Ansible :D
 
-- clone the exam repo to your machine and go to that directory
-- create a new branch from the development branch
-- install ansible
-- create hosts.ini file for inventory
-    - create group called 'routers'
-        - define 4 hosts:
+- Clone the exam repo to your machine and go to that directory
+- Create a new branch from the development branch
+- Install ansible
+- Complete the hosts.ini file so you can use it as an inventory source
+    - Create group called 'routers'
+        - Define 4 hosts:
             - router_1 with primary ip address of 1.1.1.1
             - router_2 with primary ip address of 2.2.2.2
             - router_3 with primary ip address of 3.3.3.3
             - router_4 with primary ip address of 4.4.4.4
-    - create group called 'switches'
-        - define 4 hosts
+    - Create group called 'switches'
+        - Define 4 hosts
             - switch_1 with primary ip of 172.16.1.1
             - switch_2 with primary ip of 172.16.1.2
             - switch_3 with primary ip of 172.16.1.3
             - switch_4 with primary ip of 172.16.1.4
-    - define group 'all'
-        - make routers and switches child groups of 'all'
+    - Define the 'all' group
+        - Make the 'routers' and 'switches' groups children of 'all'
 
-- create a folder to store files for group variables
-    - create a json file for the group all
-        - define a variable called 'dns_servers' and set it to this list of IPs: 8.8.8.8, 8.8.4.4
-    - create json file for routers
-        - define a variable called management_interface and set it to Loopback0
-        - define a variable called device_type and set it equal to 'router'
-    - create json file for switches
-        - define a variable called management_interface and set it to Vlan1000
-        - define a variable called device_type and set it equal to 'switch'
+- Create the folder to store files for group variables
+    - Create a file to hold variables for the group 'all'
+        - You must use JSON
+        - Define a variable called 'dns_servers' and set it a list of two IPs: 8.8.8.8, 8.8.4.4
+    - Create a file to hold variables for the group 'routers'
+        - You must use JSON
+        - Define a variable called 'management_interface' and set it to 'Loopback0'
+        - Define a variable called 'device_type' and set it equal to 'router'
+    - Create a file to hold variables for the group 'switches'
+        - Define a variable called 'management_interface' and set it to 'Vlan1000'
+        - Define a variable called 'device_type' and set it equal to 'switch'
 
 - In base.j2, fill in the empty variable call after 'hostname' on the first line
 
-- create template to generate interface configurations
-    - using a for loop, create four physical interfaces
-        - resulting interface numbers should be 0/0, 0/1, 0/2, 0/3
-        - set the interface type to 'Ge' if the device_type is 'router' else 'Fe'.
-        - For a router, the output would be Ge0/0, Ge0/1, Ge0/2, Ge0/3
-        - for a switch, the output would be Fe0/0, Fe0/1, Fe0/2, Fe0/3
-        - for the sake of simplicity, set the ip address of each interface to 5.5.5.5 255.255.255.0
+- Complete the 'physical_interfaces.j2' template to generate interface configurations
+    - Using a for loop, create four physical interfaces
+        - The resulting interface numbers should be 0/0, 0/1, 0/2, 0/3
+        - Set the interface type to 'Ge' if the device_type is 'router', otherwise set it to 'Fe'
+        - For a router, the interfaces would be Ge0/0, Ge0/1, Ge0/2, Ge0/3
+        - For a switch, the interfaces would be Fe0/0, Fe0/1, Fe0/2, Fe0/3
+        - For the sake of simplicity, set the ip address of each interface to 5.5.5.5 255.255.255.0
 
-- create template to generate the configuration for dns servers
-    - using a for loop, create a line that contains the IP address of each server in the dns_servers variable
-    - make sure to keep it to one line
+- Complete the 'dns_servers.j2' template to generate the configuration for dns servers
+    - Using a for loop, create a dns configuration that includes both servers in the 'dns_servers' variable
     - example:
         - ip name-server 8.8.8.8 8.8.4.4
 
-- finish the template to generate the management interface configuration
-    - fill in the empty variable calls with the appropriate variables
-    - the management interface's IP address should be the primary IP address of the host
-    - the subnet mask should be 255.255.255.255 if the device_type is router, otherwise it should be 255.255.255.0
+- Complete the 'management_interface.j2' template
+    - Fill in the empty variable calls with the appropriate variables (interface name, ip address, and subnet mask)
+        - The management interface's IP address should be the primary IP address of the host
+        - The subnet mask should be 255.255.255.255 if the device_type is router, otherwise it should be 255.255.255.0
 
-- import the dns_servers.j2, physical_interfaces.j2, and management_interface.j2 templates into the base template
-- finish the playbook called build.yml
-    - configure the playbook so that localhost is responsible for carrying it out
-    - set start_time variable
-    - create a directory to store device config files using the start_time variable in the name
-    - generate device config files and store in the directory you created
-        - store in .cfg file
-        - put the device hostname in the name of it's config file
-        - set the playbook to continue if the task fails
-    - use scp to send configs to a remote server
-        - set the playbook to continue if the task fails
-    - delete the original directory
+- Import the dns_servers.j2, physical_interfaces.j2, and management_interface.j2 templates into the base.j2 template
+
+- Finish the playbook called build.yml
+    - This playbook will generate device configuration files
+    - Configure each task so that they are executed by the localhost
+    - Create a 'start_time' variable equal to the current system time
+    - Create a directory to store the configuration files.  The directory name should be start_time + '-configs'
+        - example: '20220317182123-configs'
+    - Generate device configuration files and store them in the directory you just created
+        - Output to them to .cfg files
+        - File name for each device should be the device hostname
+        - Configure the playbook to continue if this task fails
 - Run the playbook
-    - pass in an extra variable called syslog_server and set the value equal to 10.10.10.10
+    - Pass in an extra variable called 'syslog_server' and set the value equal to 10.10.10.10
+
 - Commit the changes to your branch
 
