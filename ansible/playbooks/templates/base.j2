@@ -6,10 +6,10 @@ hostname {{  }}
 {# import your pysical_interfaces.j2 template here #}
 
 !
-{# import your virtual_interfaces.j2 template here #}
+{# import your management_interface.j2 template here #}
 
 !
-log server {{ syslog_server | default('none') }}
+logging host {{ syslog_server | default('none') }}
 !
 line vty 0 4
   logging synchronous
