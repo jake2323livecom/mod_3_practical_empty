@@ -80,7 +80,6 @@
             - Set the playbook to continue if the config generation fails for any one device
         - Use scp to send configs to their respective devices
         - Send a command to each device telling it to restart
-        - Delete the directory you created
 
 - Run the playbook
     - Pass in an extra variable called syslog_server and set the value equal to 10.10.10.10
